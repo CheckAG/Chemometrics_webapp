@@ -1,41 +1,72 @@
 from typing import Callable
 
 import pandas as pd
+from sidebar import *
 from plots import plot_auc_curve, plot_precision_recall_curve, plot_score_distribution
 
 from shiny import Inputs, Outputs, Session, module, render, ui
 
-__all__ = ['dashboard_ui', 'training_server', 'tools_ui', 'data_view_server',
-           'transform_ui', 'transform_server', 'analysis_ui', 'analysis_server',
-           'operations_ui', 'operations_server']
+__all__ = ['dashboard_ui', 'training_server', 'tools_ui', 'data_view_server']
 
 @module.ui
 def dashboard_ui():
     return ui.nav_panel(
         "Dashboard",
         ui.layout_columns(
-            ui.card(
-                ui.card_header("Graph view"),
-                ui.output_plot("metric"),
-                ui.input_select(
-                    "metric",
-                    "Metric",
-                    choices=["ROC Curve", "Precision-Recall"],
+            ui.input_action_button(
+                "load_data",
+                "Load Data"
+            ),
+            ui.input_action_button(
+                "load_dataset",
+                "Load Dataset"
+            ),
+            ui.input_action_button(
+                "export_excel",
+                "Export To Excel"
+            ),
+            ui.input_action_button(
+                "show_info",
+                "Information"
+            ),
+            col_widths=(3,3,3,3)
+        ),
+        ui.layout_sidebar(
+            ui.sidebar(
+                ui.accordion(
+                    ui.accordion_panel("Tools", tools_menu),  
+                    ui.accordion_panel("Transform", transform_menu),  
+                    ui.accordion_panel("Analysis", analysis_menu),  
+                    ui.accordion_panel("Socket", "Section E content"),  
+                    id="acc",  
                 ),
-                height="40vh",
+                width="300px",
+                open = "always"
             ),
-            ui.card(
-                ui.card_header("Data Panel"),
-            ),
-            ui.card(
-                ui.card_header("Result"),
-                ui.output_plot("score_dist"),  
-                height="40vh",              
-            ),
-            ui.card(
-                ui.card_header("Dataset panel")
-            ),
-            col_widths=(8,4),
+            ui.layout_columns(
+                ui.card(
+                    ui.card_header("Graph view"),
+                    ui.output_plot("metric"),
+                    ui.input_select(
+                        "metric",
+                        "Metric",
+                        choices=["ROC Curve", "Precision-Recall"],
+                    ),
+                    height="40vh",
+                ),
+                ui.card(
+                    ui.card_header("Data Panel"),
+                ),
+                ui.card(
+                    ui.card_header("Result"),
+                    ui.output_plot("score_dist"),  
+                    height="40vh",              
+                ),
+                ui.card(
+                    ui.card_header("Dataset panel")
+                ),
+                col_widths=(8,4)
+            )
         )
     )
 
@@ -62,7 +93,7 @@ def training_server(
 @module.ui
 def tools_ui():
     return ui.nav_panel(
-        "Tools",
+        "View Dataset",
         ui.layout_columns(
             ui.value_box(
                 title="Row count",
@@ -102,104 +133,3 @@ def data_view_server(
     def data():
         return df()
 
-
-@module.ui
-def transform_ui():
-    return ui.nav_panel(
-        "Transform",
-        ui.layout_columns(
-            ui.card(
-                ui.card_header("placeholder 1"),
-                height = "40vh"
-            ),
-            ui.card(
-                ui.card_header("placeholder 2"),
-                height = "40vh"
-            ),
-            ui.card(
-                ui.card_header("placeholder 3"),
-                height = "40vh"
-            ),
-            ui.card(
-                ui.card_header("placeholder 4"),
-                height = "40vh"
-            ),
-            col_widths=(6,6)
-        )
-    )
-
-@module.server
-def transform_server(
-    input: Inputs, 
-    output: Outputs, 
-    session: Session
-):
-    return
-
-
-@module.ui
-def analysis_ui():
-    return ui.nav_panel(
-        "Analysis",
-        ui.layout_columns(
-            ui.card(
-                ui.card_header("placeholder 1"),
-                height = "40vh"
-            ),
-            ui.card(
-                ui.card_header("placeholder 2"),
-                height = "40vh"
-            ),
-            ui.card(
-                ui.card_header("placeholder 3"),
-                height = "40vh"
-            ),
-            ui.card(
-                ui.card_header("placeholder 4"),
-                height = "40vh"
-            ),
-            col_widths=(6,6)
-        )
-    )
-
-@module.server
-def analysis_server(
-    input: Inputs, 
-    output: Outputs, 
-    session: Session
-):
-    return
-
-
-@module.ui
-def operations_ui():
-    return ui.nav_panel(
-        "Arithmetic",
-        ui.layout_columns(
-            ui.card(
-                ui.card_header("placeholder 1"),
-                height = "40vh"
-            ),
-            ui.card(
-                ui.card_header("placeholder 2"),
-                height = "40vh"
-            ),
-            ui.card(
-                ui.card_header("placeholder 3"),
-                height = "40vh"
-            ),
-            ui.card(
-                ui.card_header("placeholder 4"),
-                height = "40vh"
-            ),
-            col_widths=(6,6)
-        )
-    )
-
-@module.server
-def operations_server(
-    input: Inputs, 
-    output: Outputs, 
-    session: Session
-):
-    return
