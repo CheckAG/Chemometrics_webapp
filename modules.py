@@ -1,36 +1,26 @@
 from typing import Callable
 
 import pandas as pd
+from bokeh import *
+import pandas_bokeh
+
 from sidebar import *
+from functions import *
 from plots import plot_auc_curve, plot_precision_recall_curve, plot_score_distribution
 
-from shiny import Inputs, Outputs, Session, module, render, ui
+from shiny import Inputs, Outputs, Session, reactive, module, render, ui
 
 __all__ = ['dashboard_ui', 'training_server', 'tools_ui', 'data_view_server']
+
+main_dataframe = pd.read_csv('zDO_NOT_REMOVE.csv', skiprows=1)
+
+# this variable increments every time a file is added. used to add labels to files.
+file_count = 1
 
 @module.ui
 def dashboard_ui():
     return ui.nav_panel(
         "Dashboard",
-        ui.layout_columns(
-            ui.input_action_button(
-                "load_data",
-                "Load Data"
-            ),
-            ui.input_action_button(
-                "load_dataset",
-                "Load Dataset"
-            ),
-            ui.input_action_button(
-                "export_excel",
-                "Export To Excel"
-            ),
-            ui.input_action_button(
-                "show_info",
-                "Information"
-            ),
-            col_widths=(3,3,3,3)
-        ),
         ui.layout_sidebar(
             ui.sidebar(
                 ui.accordion(
@@ -44,18 +34,35 @@ def dashboard_ui():
                 open = "always"
             ),
             ui.layout_columns(
+                ui.input_file(
+                    "file1",
+                    "Choose CSV File",
+                    accept=[".csv"],
+                    multiple=False,
+                ),
+                ui.input_action_button(
+                    "load_dataset",
+                    "Load Dataset"
+                ),
+                ui.input_action_button(
+                    "export_excel",
+                    "Export To Excel"
+                ),
+                ui.input_action_button(
+                    "show_info",
+                    "Information"
+                ),
+                col_widths=(3,3,3,3)
+            ),
+            ui.layout_columns(
                 ui.card(
                     ui.card_header("Graph view"),
-                    ui.output_plot("metric"),
-                    ui.input_select(
-                        "metric",
-                        "Metric",
-                        choices=["ROC Curve", "Precision-Recall"],
-                    ),
+                    ui.output_plot("theplot"),
                     height="40vh",
                 ),
                 ui.card(
                     ui.card_header("Data Panel"),
+                    id = "datapanel"
                 ),
                 ui.card(
                     ui.card_header("Result"),
@@ -78,6 +85,81 @@ def training_server(
     session: Session,
     df: Callable[[], pd.DataFrame],
 ):
+    @reactive.calc
+    def parsed_file():
+        global main_dataframe
+        global file_count
+        file: list[FileInfo] | None = input.file1()
+        if file is None:
+            return main_dataframe
+        tempfile = pd.read_csv(  # pyright: ignore[reportUnknownMemberType]
+            file[0]["datapath"],
+            skiprows=1,
+        )
+        tempfile['file'] = file[0]["name"]
+        file_count += 1
+        main_dataframe = pd.concat([main_dataframe, tempfile])
+
+        filename = file[0]["name"]
+        entry = ui.panel_well(
+            f"{filename}",
+            ui.input_checkbox(
+                f"datapanel_{file_count}",
+                "remove",
+                False
+            )
+        )
+        ui.insert_ui(
+            entry,
+            selector= "#datapanel",
+            where="beforeEnd"
+        )
+
+        return main_dataframe
+
+    @render.plot
+    def theplot():
+        return sns.relplot(
+            data=parsed_file(),
+            x="Wavelength [nm]",
+            y="Intensity",
+            hue="file",
+            kind = "line",
+            legend=False
+        )
+    
+    # @render_bokeh
+    # def mainplot():
+    #     from bokeh.plotting import figure
+
+    #     fig = figure(x_axis_label = "wavelength", y_axis_label = "Intensity")
+    #     fig.line(
+            
+    #     )
+
+    # @reactive.effect
+    # def add_data_panel():
+    #     global file_count
+    #     file: list[FileInfo] | None = input.file1()
+    #     if file is None:
+    #         return
+    #     filename = file[0]["name"]
+    #     entry = ui.panel_well(
+    #         f"{filename}",
+    #         ui.input_checkbox(
+    #             f"datapanel_{file_count}",
+    #             "remove",
+    #             False
+    #         )
+    #     )
+    #     ui.insert_ui(
+    #         entry,
+    #         #datapanel,
+    #         where="beforeEnd"
+    #     )
+    #     return
+
+    
     @render.plot
     def score_dist():
         return plot_score_distribution(df())

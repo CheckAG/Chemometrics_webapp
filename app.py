@@ -14,17 +14,6 @@ app_ui = ui.page_navbar(
     dashboard_ui("tab1"),
     tools_ui("tab2"),
     header=ui.include_css(Path(__file__).parent / "styles.css"),
-    footer=ui.input_select(
-        "account",
-        "File Used",
-        choices=[
-            "Berge & Berge",
-            "Fritsch & Fritsch",
-            "Hintz & Hintz",
-            "Mosciski and Sons",
-            "Wolff Ltd",
-        ],
-    ),
     id="tabs",
     title="Monitoring",
 )
