@@ -62,7 +62,8 @@ def dashboard_ui():
                 ),
                 ui.card(
                     ui.card_header("Data Panel"),
-                    id = "datapanel"
+                    id = "datapanel",
+                    max_height= "40vh"
                 ),
                 ui.card(
                     ui.card_header("Result"),
@@ -116,6 +117,11 @@ def training_server(
         )
 
         return main_dataframe
+    
+    @reactive.effect
+    def removeDatapanelEntry():
+        return
+
 
     @render.plot
     def theplot():
