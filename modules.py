@@ -9,13 +9,14 @@ from functions import *
 from plots import plot_auc_curve, plot_precision_recall_curve, plot_score_distribution
 
 from shiny import Inputs, Outputs, Session, reactive, module, render, ui
+from shinywidgets import render_bokeh
 
 __all__ = ['dashboard_ui', 'training_server', 'tools_ui', 'data_view_server']
 
-main_dataframe = pd.read_csv('zDO_NOT_REMOVE.csv', skiprows=1)
+main_dataframe = pd.read_csv('test_files/zDO_NOT_REMOVE.csv', skiprows=1)
 
 # this variable increments every time a file is added. used to add labels to files.
-file_count = 1
+file_count = 0
 
 @module.ui
 def dashboard_ui():
@@ -57,13 +58,21 @@ def dashboard_ui():
             ui.layout_columns(
                 ui.card(
                     ui.card_header("Graph view"),
-                    ui.output_plot("theplot"),
-                    height="40vh",
+                    ui.output_plot("seaborn_plot"),
+                    ui.card_footer(
+                        ui.input_action_button(
+                            "clear_data",
+                            "Clear Data"
+                        )
+                    ),
+                    height="60vh",
                 ),
                 ui.card(
                     ui.card_header("Data Panel"),
+                    ui.div({"id": "datapanel_entries"}),
                     id = "datapanel",
-                    max_height= "40vh"
+                    max_height= "60vh",
+                    class_="datapanel"
                 ),
                 ui.card(
                     ui.card_header("Result"),
@@ -71,7 +80,8 @@ def dashboard_ui():
                     height="40vh",              
                 ),
                 ui.card(
-                    ui.card_header("Dataset panel")
+                    ui.card_header("Dataset panel"),
+                    ui.div({"id": "datasetpanel_entries"})
                 ),
                 col_widths=(8,4)
             )
@@ -88,6 +98,9 @@ def training_server(
 ):
     @reactive.calc
     def parsed_file():
+        # This function does two things: it reads the file input and converts it into a dataframe, 
+        # and then also adds a data panel entry with the filename. moving the second function into 
+        # a reactive.effect results in a program lockup.
         global main_dataframe
         global file_count
         file: list[FileInfo] | None = input.file1()
@@ -103,28 +116,28 @@ def training_server(
 
         filename = file[0]["name"]
         entry = ui.panel_well(
-            f"{filename}",
-            ui.input_checkbox(
-                f"datapanel_{file_count}",
-                "remove",
-                False
-            )
+            f"{filename}"
         )
         ui.insert_ui(
             entry,
-            selector= "#datapanel",
+            selector= "#datapanel_entries",
             where="beforeEnd"
         )
 
         return main_dataframe
     
     @reactive.effect
-    def removeDatapanelEntry():
-        return
+    def clear_datapanel():
+        global main_dataframe
+        if input.clear_data() > 0:
+            ui.remove_ui(selector="#datapanel_entries", multiple=True)
+            ui.remove_ui(selector="#datasetpanel_entries", multiple=True)
+            main_dataframe = pd.read_csv('test_files/zDO_NOT_REMOVE.csv', skiprows=1)
 
+        
 
     @render.plot
-    def theplot():
+    def seaborn_plot():
         return sns.relplot(
             data=parsed_file(),
             x="Wavelength [nm]",
@@ -135,36 +148,8 @@ def training_server(
         )
     
     # @render_bokeh
-    # def mainplot():
-    #     from bokeh.plotting import figure
-
-    #     fig = figure(x_axis_label = "wavelength", y_axis_label = "Intensity")
-    #     fig.line(
-            
-    #     )
-
-    # @reactive.effect
-    # def add_data_panel():
-    #     global file_count
-    #     file: list[FileInfo] | None = input.file1()
-    #     if file is None:
-    #         return
-    #     filename = file[0]["name"]
-    #     entry = ui.panel_well(
-    #         f"{filename}",
-    #         ui.input_checkbox(
-    #             f"datapanel_{file_count}",
-    #             "remove",
-    #             False
-    #         )
-    #     )
-    #     ui.insert_ui(
-    #         entry,
-    #         #datapanel,
-    #         where="beforeEnd"
-    #     )
-    #     return
-
+    # def interactive_plot():
+    #     raise NotImplementedError("This is meant to plot a bokeh plot, but is incomplete. Use seaborn_plot() instead")
     
     @render.plot
     def score_dist():
