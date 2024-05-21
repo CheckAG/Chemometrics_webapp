@@ -129,9 +129,9 @@ def training_server(
     @reactive.effect
     def clear_datapanel():
         global main_dataframe
-        if input.clear_data() > 0:
-            ui.remove_ui(selector="#datapanel_entries", multiple=True)
-            ui.remove_ui(selector="#datasetpanel_entries", multiple=True)
+        if input.clear_data() == 1:
+            ui.remove_ui(selector="div#datapanel_entries div", multiple=True)
+            ui.remove_ui(selector="div#datasetpanel_entries div", multiple=True)
             main_dataframe = pd.read_csv('test_files/zDO_NOT_REMOVE.csv', skiprows=1)
 
         
