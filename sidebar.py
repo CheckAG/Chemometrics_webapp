@@ -1,3 +1,8 @@
+######################################################################################################################################
+# this page contains all the accordion panels on the sidebar and their contents. Functions need to be implemented for them.
+# The math is already done in functions.py(thank you, mallik), the functions just need to be modified to be used on the shiny dataframe
+######################################################################################################################################
+
 from shiny import ui
 
 tools_menu = [ui.input_action_button(

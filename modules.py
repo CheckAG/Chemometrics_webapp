@@ -6,7 +6,7 @@ import pandas_bokeh
 
 from sidebar import *
 from functions import *
-from plots import plot_auc_curve, plot_precision_recall_curve, plot_score_distribution
+from plots import plot_score_distribution
 
 from shiny import Inputs, Outputs, Session, reactive, module, render, ui
 from shinywidgets import render_bokeh
@@ -74,6 +74,7 @@ def dashboard_ui():
                     max_height= "60vh",
                     class_="datapanel"
                 ),
+                # this card just displays a filler graph
                 ui.card(
                     ui.card_header("Result"),
                     ui.output_plot("score_dist"),  
@@ -98,9 +99,9 @@ def training_server(
 ):
     @reactive.calc
     def parsed_file():
-        # This function does two things: it reads the file input and converts it into a dataframe, 
-        # and then also adds a data panel entry with the filename. moving the second function into 
-        # a reactive.effect results in a program lockup.
+        # This function does two things: it reads the file input and adds it to the dataframe, 
+        # and then also adds a datapanel ui element with the filename. moving the second function into 
+        # a reactive.effect results in a program lockup because they both depend on the same reactive value.
         global main_dataframe
         global file_count
         file: list[FileInfo] | None = input.file1()
@@ -128,14 +129,16 @@ def training_server(
     
     @reactive.effect
     def clear_datapanel():
+        # this function removes ui and resets the dataframe every time the clear data button is pressed.
         global main_dataframe
-        if input.clear_data() == 1:
+        global file_count
+        if input.clear_data() > 0:
             ui.remove_ui(selector="div#datapanel_entries div", multiple=True)
             ui.remove_ui(selector="div#datasetpanel_entries div", multiple=True)
             main_dataframe = pd.read_csv('test_files/zDO_NOT_REMOVE.csv', skiprows=1)
-
+            file_count = 0
         
-
+    # Seaborn plot. Works properly, no issues.
     @render.plot
     def seaborn_plot():
         return sns.relplot(
@@ -147,22 +150,22 @@ def training_server(
             legend=False
         )
     
-    # @render_bokeh
-    # def interactive_plot():
-    #     raise NotImplementedError("This is meant to plot a bokeh plot, but is incomplete. Use seaborn_plot() instead")
-    
+    #Bokeh plot, does not display for some reason. show(p) returns a plot though so the code is correct.
+    @render_bokeh
+    def interactive_plot():
+        from bokeh.plotting import figure,show, save
+        data = parsed_file()
+        p = figure(x_axis_label="Wavelength", y_axis_label="Intensity")
+        p.line(x=[1,2,3,4,5,6], y= [2,4,6,8,10,12])  #change this to use dataframe after getting it working
+        return p
+
+    # placeholder
     @render.plot
     def score_dist():
         return plot_score_distribution(df())
 
-    @render.plot
-    def metric():
-        if input.metric() == "ROC Curve":
-            return plot_auc_curve(df(), "is_electronics", "training_score")
-        else:
-            return plot_precision_recall_curve(df(), "is_electronics", "training_score")
 
-
+# This whole page is just boilerplate, nothing has been implemented yet here.
 @module.ui
 def tools_ui():
     return ui.nav_panel(
