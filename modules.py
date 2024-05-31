@@ -36,14 +36,16 @@ def dashboard_ui():
             ),
             ui.layout_columns(
                 ui.input_file(
-                    "file1",
-                    "Choose CSV File",
+                    "load_single_file",
+                    "Choose Data",
                     accept=[".csv"],
                     multiple=False,
                 ),
-                ui.input_action_button(
-                    "load_dataset",
-                    "Load Dataset"
+                ui.input_file(
+                    "load_dataset_file",
+                    "Choose Dataset",
+                    accept=[".csv"],
+                    multiple=False,
                 ),
                 ui.input_action_button(
                     "export_excel",
@@ -77,7 +79,7 @@ def dashboard_ui():
                 # this card just displays a filler graph
                 ui.card(
                     ui.card_header("Result"),
-                    ui.output_plot("score_dist"),  
+                    ui.output_plot("dataset_plot"),  
                     height="40vh",              
                 ),
                 ui.card(
@@ -97,6 +99,7 @@ def training_server(
     session: Session,
     df: Callable[[], pd.DataFrame],
 ):
+    
     @reactive.calc
     def parsed_file():
         # This function does two things: it reads the file input and adds it to the dataframe, 
@@ -104,7 +107,7 @@ def training_server(
         # a reactive.effect results in a program lockup because they both depend on the same reactive value.
         global main_dataframe
         global file_count
-        file: list[FileInfo] | None = input.file1()
+        file: list[FileInfo] | None = input.load_single_file()
         if file is None:
             return main_dataframe
         tempfile = pd.read_csv(  # pyright: ignore[reportUnknownMemberType]
@@ -113,7 +116,7 @@ def training_server(
         )
         tempfile['file'] = file[0]["name"]
         file_count += 1
-        main_dataframe = pd.concat([main_dataframe, tempfile])
+        new_dataframe = pd.concat([main_dataframe, tempfile])
 
         filename = file[0]["name"]
         entry = ui.panel_well(
@@ -125,8 +128,56 @@ def training_server(
             where="beforeEnd"
         )
 
-        return main_dataframe
+        return new_dataframe
     
+
+    @reactive.calc
+    def load_dataset():
+        '''
+        TODO:
+        1) add a dataset panel ui that shows info about the dataset(size, shape, number of lines, etc.)
+        2) Fix the code!!!! this doesn't work and needs to be fixed
+        '''
+        
+
+        file2: list[FileInfo] | None = input.load_dataset_file()
+        if file2 is None:
+            df = pd.read_csv('test_files/another.csv', skiprows=1)
+            filename = "lies"
+        else:
+            df = pd.read_csv(  # pyright: ignore[reportUnknownMemberType]
+                file2[0]["datapath"],
+                header=None,
+                sep=',',
+                skiprows=1
+            )
+            filename = file2[0]["name"]
+            print("else block reached")
+
+
+        dataset_csv = {}
+        dataset_csv["wavelength"] = df.iloc[1:, 1].values.T.tolist()  # wavelength selecting all rows from 1 to end and all the columns till 0 to 1
+        for i in range (1,len(df.axes[1]) - 1):
+            data = df.iloc[1:, i].values.tolist()
+            dataset_csv[f"sample{i}"] = data    
+        # label = df.iloc[0:1, 1:].values.T  # label selecting first row and all the columns from 1 to end
+        # dataset_csv = pd.DataFrame([Wavelength, data, label,filename], columns=["wavelength","data","label","filename"])
+        df2 = pd.DataFrame(dataset_csv)
+        df2_melted = df2.melt(id_vars = "wavelength",  var_name="sample", value_name = "absorbance")
+
+        entry = ui.panel_well(
+            f"{filename}"
+        )
+        ui.insert_ui(
+            entry,
+            selector= "#datasetpanel_entries",
+            where="beforeEnd"
+        )
+        print("end of function")
+        
+        return df2_melted
+    
+
     @reactive.effect
     def clear_datapanel():
         # this function removes ui and resets the dataframe every time the clear data button is pressed.
@@ -138,6 +189,7 @@ def training_server(
             main_dataframe = pd.read_csv('test_files/zDO_NOT_REMOVE.csv', skiprows=1)
             file_count = 0
         
+
     # Seaborn plot. Works properly, no issues.
     @render.plot
     def seaborn_plot():
@@ -148,6 +200,17 @@ def training_server(
             hue="file",
             kind = "line",
             legend=False
+        )   
+    
+    @render.plot
+    def dataset_plot():
+        return sns.relplot(
+            data = load_dataset(),
+            x = "wavelength",
+            y = "absorbance",
+            hue = "sample",
+            kind = "line",
+            # legend = False
         )
     
     #Bokeh plot, does not display for some reason. show(p) returns a plot though so the code is correct.

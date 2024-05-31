@@ -6,8 +6,10 @@ from sidebar import *
 
 from shiny import App, Inputs, Outputs, Session, reactive, ui
 
-df = pd.read_csv(Path(__file__).parent / "scores.csv")
 
+
+df = pd.read_csv(Path(__file__).parent / "scores.csv")
+    
 
 
 app_ui = ui.page_navbar(
