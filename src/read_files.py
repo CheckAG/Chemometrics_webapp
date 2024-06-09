@@ -4,7 +4,7 @@ from tkinter import filedialog
 import pandas as pd
 from tkinter import messagebox
 
-def load_data(filepath):
+def load_data(filepath, filename):
     """
     Function to read individual file with single data, or convert a file with multiple data into single data in data panel.
     Below file formats are supported:
@@ -24,7 +24,7 @@ def load_data(filepath):
         pass
 
     elif filepath.endswith('.csv'):
-        filename = os.path.basename(filepath)
+        filename = filename.split('.')[0]
         df = pd.read_csv(filepath, header=None, sep=',')
         if df.shape[1] < 2:
             messagebox.showinfo('Warning',

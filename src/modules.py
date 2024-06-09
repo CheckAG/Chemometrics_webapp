@@ -14,7 +14,7 @@ from shinywidgets import render_bokeh
 
 __all__ = ['dashboard_ui', 'training_server', 'tools_ui', 'data_view_server']
 
-main_dataframe = load_data('test_files\AS.csv')
+main_dataframe = load_data('test_files\AS.csv', "AS.csv")
 datapanel = {"AS":main_dataframe}
 datapanelIndex = {"AS":"AS"}
 datasetpanel = {}
@@ -119,25 +119,31 @@ def training_server(
     df = reactive.Value(main_dataframe)
 
     # this is useless filler code, will be changed later
-    @reactive.calc
+    @reactive.calc()
     def parsed_file() -> pd.DataFrame:
         file: list[FileInfo] | None = input.loadData()
         if file is None:
             return df.get()
-        read_data = load_data(file[0]["datapath"])
+        read_data = load_data(file[0]["datapath"], file[0]['name'])
+        print(read_data)
         datapanel.update({read_data[2]:read_data})
         datapanelIndex.update({read_data[2]:read_data[2]})
-        df.set(read_data)
-        ui.update_select("datapanel", choices=datapanelIndex)
-        return df.get()
-
+        return read_data
+    
     @reactive.effect
-    @reactive.event(input.datapanel)
     @reactive.event(input.loadData)
-    def update_select_data():
+    def update_load_data():
         print("updating data select")
         global datapanel
-        parsed_file()
+        read_data = parsed_file()
+        ui.update_select("datapanel", choices=datapanelIndex, selected=read_data[2])
+        index = ''.join(input.datapanel()).replace(',', '')
+        selected_data = datapanel[index]
+        df.set(selected_data)
+    
+    @reactive.effect
+    @reactive.event(input.loadData)
+    def update_select_data():
         index = ''.join(input.datapanel()).replace(',', '')
         selected_data = datapanel[index]
         df.set(selected_data)
@@ -156,7 +162,6 @@ def training_server(
     @render.plot
     def plot_fig():
         plot_data = df.get()
-        print(plot_data)
         fig, ax = plt.subplots()
         ax.plot(plot_data[0], plot_data[1])
         ax.set_xlabel('Wavelength in micrometer')
