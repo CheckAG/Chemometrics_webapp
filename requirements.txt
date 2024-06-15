@@ -3,3 +3,9 @@ pandas
 plotnine
 scikit-learn
 shiny
+seaborn
+shinywidgets
+spectres
+pandas_bokeh
+bokeh
+jcamp
