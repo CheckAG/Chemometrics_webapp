@@ -142,7 +142,7 @@ def training_server(
         df.set(selected_data)
     
     @reactive.effect
-    @reactive.event(input.loadData)
+    @reactive.event(input.datapanel)
     def update_select_data():
         index = ''.join(input.datapanel()).replace(',', '')
         selected_data = datapanel[index]
