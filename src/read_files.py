@@ -30,8 +30,8 @@ def load_data(filepath, filename):
             messagebox.showinfo('Warning',
                                 'Too few cells selected. You must select at least two columns and five rows.')
         else:
-            wavelength = df.iloc[:, :1].values
-            data = df.iloc[:, 1:].values  # data from all rows and from second column, since first column is wavelength.
+            wavelength = df.iloc[1:, :1].values
+            data = df.iloc[1:, 1:].values  # data from all rows and from second column, since first column is wavelength.
 
         loadedData = [wavelength, data, filename]
 

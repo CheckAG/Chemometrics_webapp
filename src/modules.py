@@ -156,11 +156,11 @@ def training_server(
 
     @reactive.effect
     @reactive.event(input.loadDataset)
-    def update_load_data():
+    def update_load_dataset():
         print("updating dataset select")
         global datasetpanel
         read_data = parsed_dataset()
-        ui.update_select("datasetpanel", choices=datapanelIndex, selected=read_data[3])
+        ui.update_select("datasetpanel", choices=datasetpanelIndex, selected=read_data[3])
         index = ''.join(input.datasetpanel()).replace(',', '')
         selected_data = datasetpanel[index]
         df.set(selected_data)
@@ -174,7 +174,7 @@ def training_server(
 
     @reactive.effect
     @reactive.event(input.datasetpanel)
-    def update_select_data():
+    def update_select_dataset():
         index = ''.join(input.datasetpanel()).replace(',', '')
         selected_data = datasetpanel[index]
         df.set(selected_data)
