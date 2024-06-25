@@ -30,15 +30,15 @@ def load_data(filepath, filename):
             messagebox.showinfo('Warning',
                                 'Too few cells selected. You must select at least two columns and five rows.')
         else:
-            wavelength = df.iloc[:, :1].values
-            data = df.iloc[:, 1:].values  # data from all rows and from second column, since first column is wavelength.
+            wavelength = df.iloc[1:, :1].values
+            data = df.iloc[1:, 1:].values  # data from all rows and from second column, since first column is wavelength.
 
         loadedData = [wavelength, data, filename]
 
     return loadedData
 
 
-def load_dataset():
+def load_dataset(filepath, filename):
     """
     Function to read the data from csv as a set of data
     csv should be staored in the specified format
@@ -49,8 +49,8 @@ def load_dataset():
     :return: List od numpy array
     """
     dataset_csv = []
-    filepath = filedialog.askopenfilename()
-    filename = os.path.basename(filepath)
+    # filepath = filedialog.askopenfilename()
+    # filename = os.path.basename(filepath)
     df = pd.read_csv(filepath, header=None, sep=',')
     if df.shape[1] < 2:
         messagebox.showinfo('Warning',
